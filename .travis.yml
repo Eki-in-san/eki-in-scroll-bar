@@ -5,6 +5,7 @@ node_js:
 - '4'
 deploy:
   provider: npm
+  email: "morioka8614@gmail.com"
   on:
     tags: true
   api_key:
