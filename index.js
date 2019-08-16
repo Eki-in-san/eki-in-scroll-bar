@@ -201,7 +201,6 @@ $(function() {
           .attr("id","scrb-box_"+(index+1));
 
         $.each($(this).data(),function(key,value){
-          console.log( "id : " + $(element).attr("id") + " , " + key + " : " + value );
           scrb_data[index]["style"][key] = value;
         });
 
@@ -351,28 +350,10 @@ $(function() {
 
         for (var i = 0; i < style_config.length; i++){
           for (var j = 0; j < style_config[i]["style"].length; j++){
-            (
-              (
-                $(this).data( style_config[i]["attr_name"]) !== undefined
-                ?
-                (
-                  style_config[i]["style"][j]["calc"]
-                  ?
-                  ( "calc(" + $(this).data(style_config[i]["attr_name"]) + style_config[i]["style"][j]["add_formula"] + ")" )
-                  :
-                  $(this).data(style_config[i]["attr_name"])
-                )
-                :
-                (
-                  style_config[i]["style"][j]["calc"]
-                  ?
-                  ("calc(" + style_config[i]["style"][j]["value"] + style_config[i]["style"][j]["add_formula"] + ")" )
-                  :
-                  style_config[i]["style"][j]["value"]
-                )
-              )
-            );
-            $(".scrb-parent:nth-child("+ (index + 1) +") " + style_config[i]["style"][j]["element"]).eq(0).css(
+            // console.log( $(this).children(style_config[i]["style"][j]["element"]) );
+            console.log( "#scrb-box_"+ (index + 1) +" " + style_config[i]["style"][j]["element"] );
+            console.log( $("#scrb-box_"+ (index + 1) +" " + style_config[i]["style"][j]["element"])[0] );
+            $("#scrb-box_"+ (index + 1) +" " + style_config[i]["style"][j]["element"]).eq(0).css(
               style_config[i]["style"][j]["css_name"],
               (
                 $(this).data( style_config[i]["attr_name"]) !== undefined
