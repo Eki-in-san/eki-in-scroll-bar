@@ -12,6 +12,10 @@
     "scrollbar",
     "scroll"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Eki-in-san/eki-in-scroll-bar.git"
+  },
   "author": "eki-in-san",
   "license": "ISC"
 }
