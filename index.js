@@ -133,7 +133,7 @@ $(function() {
       scrb_data[index]["inner-scroll-rate"] = Math.abs(scrb_data[index]["inner-current-position"] / scrb_data[index]["inner-movable-range"]);
       scrb_data[index]["bar-current-position"] = ( scrb_data[index]["bar-current-position"] < 0 ? 0 : ( scrb_data[index]["bar-current-position"] > scrb_data[index]["bar-movable-range"] ? scrb_data[index]["bar-movable-range"] : scrb_data[index]["bar-current-position"] ));
       scrb_data[index]["bar-scroll-rate"] = scrb_data[index]["bar-current-position"] / scrb_data[index]["bar-movable-range"];
-      scrb_data[index]["inner-current-position"] = ( scrb_data[index]["inner-current-position"] < 0  ? 0 : ( ( scrb_data[index]["inner-current-position"] * -1 ) > scrb_data[index]["inner-movable-range"] ? (scrb_data[index]["inner-movable-range"] * -1) : scrb_data[index]["inner-current-position"] ));
+      scrb_data[index]["inner-current-position"] = ( scrb_data[index]["inner-current-position"] > 0 ? 0 : ( ( scrb_data[index]["inner-current-position"] * -1 ) > scrb_data[index]["inner-movable-range"] ? (scrb_data[index]["inner-movable-range"] * -1) : scrb_data[index]["inner-current-position"] ));
       $(scrb_data[index]["elm_scrb_bar_v"]).css("top", ( scrb_data[index]["bar-current-position"] + scrb_data[index]["btn-b-height"] ) + "px");
       $(scrb_data[index]["elm_scrb_inner"]).css("top", scrb_data[index]["inner-movable-range"] * scrb_data[index]["bar-scroll-rate"] * -1 + "px");
       scrb_data[index]["bar-current-position"] = parseInt($(scrb_data[index]["elm_scrb_bar_v"]).css("top").replace(/[^-.0-9]/g,"")) - scrb_data[index]["btn-b-height"];
@@ -178,7 +178,6 @@ $(function() {
 
 
     scrb_data = [] ;
-    observer = [] ;
     mousedown_position_x = 0;
     mousedown_position_y = 0;
     active_bar_num = 0;
@@ -195,7 +194,6 @@ $(function() {
         //ボックス毎に実行
         scrb_data[index] = [];
         scrb_data[index]["style"] = [];
-
 
         $(this)
           .attr("id","scrb-box_"+(index+1));
@@ -216,6 +214,10 @@ $(function() {
           })
           .html($(this).html());
 
+        for( var i = $(scrb_inner).children().length - 1; i >= 0 ; i--){
+          $($(scrb_inner).children()[i])[0].after( $(this).children()[i] ) ;
+          $($(scrb_inner).children()[i]).remove() ;
+        }
 
 
         //スクロールバーの生成
@@ -279,7 +281,6 @@ $(function() {
           );
 
         $(scrb_bar_v).append(scrb_bar_v_b,scrb_bar_v_a);
-
 
         //スクロールバーのボタンの生成
 
@@ -350,9 +351,6 @@ $(function() {
 
         for (var i = 0; i < style_config.length; i++){
           for (var j = 0; j < style_config[i]["style"].length; j++){
-            // console.log( $(this).children(style_config[i]["style"][j]["element"]) );
-            console.log( "#scrb-box_"+ (index + 1) +" " + style_config[i]["style"][j]["element"] );
-            console.log( $("#scrb-box_"+ (index + 1) +" " + style_config[i]["style"][j]["element"])[0] );
             $("#scrb-box_"+ (index + 1) +" " + style_config[i]["style"][j]["element"]).eq(0).css(
               style_config[i]["style"][j]["css_name"],
               (
@@ -438,7 +436,7 @@ $(function() {
 
         //スクロールバーの上下ボタンを押した時の処理
         $(scrb_bar_v_btn_b).on("mousedown",function(e){
-            active_bar_num = $(this).index(".scrb-child_v_btn_b") ;
+            active_bar_num = $(this).closest(".scrb-parent").index(".scrb-parent") ;
             scroll_btn_count = 0;
             function repeat_b(){
               if ( scroll_btn_count == 0 || scroll_btn_count > 10 )
@@ -457,7 +455,7 @@ $(function() {
         });
 
         $(scrb_bar_v_btn_a).on("mousedown",function(e){
-            active_bar_num = $(this).index(".scrb-child_v_btn_a") ;
+            active_bar_num = $(this).closest(".scrb-parent").index(".scrb-parent") ;
             scroll_btn_count = 0;
             function repeat_a(){
               if ( scroll_btn_count == 0 || scroll_btn_count > 10 )
@@ -483,7 +481,10 @@ $(function() {
         // });
 
       }
-    );
+    ).each(function(index,element){
+      adjust_size(index);
+      adjust_height(index);
+    });
 
     //サイズ変更イベントの登録
 
@@ -493,6 +494,49 @@ $(function() {
         adjust_height(i);
       }
     }
+
+    //ページ内リンクの処理
+
+    function hash_changed(hash){
+      //リンク指定先の要素が存在しない場合は動作しない
+
+      history.pushState(null,null,hash);
+
+      if( !$(hash).length ) return ;
+
+      var scroll_value = [] ;
+      scroll_value[scroll_value.length] = $(hash).position().top ;
+
+      $(hash).parents(".scrb-child").each(function(index,element){
+          scroll_value[scroll_value.length] = $(hash).parents(".scrb-parent").eq(index)[0].offsetTop ;
+      });
+
+      for (var i = 0; i < scroll_value.length ; i++){
+        if ( i == scroll_value.length - 1 ){
+          $("html").animate({scrollTop:scroll_value[i]},500,"swing");
+        }else{
+          active_bar_num = $(".scrb-child").index($(hash).parents(".scrb-child").eq(i));
+          scrb_data[active_bar_num]["inner-current-position"] = -scroll_value[i] ;
+          $(scrb_data[active_bar_num]["elm_scrb_inner"]).css("top", -scroll_value[i] + "px");
+          $(hash).parents(".scrb-child").eq(i).animate({top:(-scroll_value[i]+"px")},500,"swing");
+          scrb_data[active_bar_num]["bar-current-position"] = scrb_data[active_bar_num]["bar-movable-range"] * scroll_value[i] / scrb_data[active_bar_num]["inner-movable-range"];
+          $(scrb_data[active_bar_num]["elm_scrb_bar_v"]).css("top", scrb_data[active_bar_num]["bar-movable-range"] * scroll_value[i] / scrb_data[active_bar_num]["inner-movable-range"] + scrb_data[active_bar_num]["btn-b-height"] + "px");
+          setTimeout(function(){
+            adjust_size(active_bar_num);
+            adjust_height(active_bar_num);
+          },0);
+        }
+      }
+    }
+
+    window.onload = function(){
+        location.hash ? hash_changed(location.hash) : "" ;
+    }
+
+    $("a").on("click",function(){
+        event.preventDefault();
+        $(this)[0].origin + $(this)[0].pathname == location.origin + location.pathname ? hash_changed($(this)[0].hash) : location.href = $(this)[0].href ;
+    });
 
     //スクロールバーにhoverした時の処理
 
@@ -533,22 +577,19 @@ $(function() {
     //スクロールバーの上を押した時
 
     $(".scrb-child_v_b").on("mousedown",function(){
-        active_bar_num = $(".scrb-child_v_b").index(this);
+        active_bar_num = $(this).closest(".scrb-parent").index(".scrb-parent") ;
         scrb_data[active_bar_num]["bar-current-position"] = scrb_data[active_bar_num]["bar-current-position"] - $(this).parent().height();
         scrb_data[active_bar_num]["bar-start-position"] = scrb_data[active_bar_num]["bar-current-position"];
         $(this).parent().css("top",(scrb_data[active_bar_num]["bar-current-position"] + scrb_data[active_bar_num]["btn-b-height"] + "px"));
-
     });
 
     //スクロールバーの下を押した時
 
     $(".scrb-child_v_a").on("mousedown",function(){
-        active_bar_num = $(".scrb-child_v_a").index(this);
+        active_bar_num = $(this).closest(".scrb-parent").index(".scrb-parent") ;
         scrb_data[active_bar_num]["bar-current-position"] = scrb_data[active_bar_num]["bar-current-position"] + $(this).parent().height();
         scrb_data[active_bar_num]["bar-start-position"] = scrb_data[active_bar_num]["bar-current-position"] ;
         $(this).parent().css("top",(scrb_data[active_bar_num]["bar-current-position"] + scrb_data[active_bar_num]["btn-b-height"] + "px"));
-        adjust_size(active_bar_num);
-        adjust_height(active_bar_num);
     });
 
     //スクロールバーの上下を押した時
@@ -561,8 +602,8 @@ $(function() {
 
         //押した所からドラッグした時
         $(window).on("mousemove",function(){
-          scrb_data[active_bar_num]["bar-current-position"] = event.pageY - $(".scrb-parent").eq(active_bar_num).offset().top - ($(".scrb-parent .scrb-child_v").eq(active_bar_num).height() / 2);
-          $(".scrb-parent .scrb-child_v").eq(active_bar_num).css("top",(scrb_data[active_bar_num]["bar-current-position"] + "px"));
+          scrb_data[active_bar_num]["bar-current-position"] = event.pageY - $(".scrb-parent").eq(active_bar_num).offset().top - ($(".scrb-parent").eq(active_bar_num).find(".scrb-child_v").height() / 2);
+          $(".scrb-parent").eq(active_bar_num).find(".scrb-child_v").css("top",(scrb_data[active_bar_num]["bar-current-position"] + "px"));
           adjust_size(active_bar_num);
           adjust_height(active_bar_num);
           $("body").css({
@@ -604,7 +645,7 @@ $(function() {
     //マウスを押した時
     $(".scrb-child_v_body").on("mousedown",function(){
         $(".scrb-child_v").off("mousemove");
-        active_bar_num = $(".scrb-child_v_body").index(this);
+        active_bar_num = $(".scrb-parent").index($(this).closest(".scrb-parent"));
         mousedown_position_x = event.pageX;
         mousedown_position_y = event.pageY;
         scrb_data[active_bar_num]["bar-start-position"] = parseInt($(this).parent().css("top").replace(/[^-.0-9]/g,"")) - scrb_data[active_bar_num]["btn-b-height"];
