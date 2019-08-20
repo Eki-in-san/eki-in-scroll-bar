@@ -1,6 +1,6 @@
 {
   "name": "eki-in-scroll-bar",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "デザインがカスタム可能なスクロールバー付きのボックスを生成します。",
   "main": "index.js",
   "scripts": {
