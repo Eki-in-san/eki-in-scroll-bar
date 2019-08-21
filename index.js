@@ -215,7 +215,7 @@ $(function() {
           .html($(this).html());
 
         for( var i = $(scrb_inner).children().length - 1; i >= 0 ; i--){
-          $($(scrb_inner).children()[i])[0].after( $(this).children()[i] ) ;
+          $($(this).children()[i]).insertAfter($($(scrb_inner).children()[i])[0]);
           $($(scrb_inner).children()[i]).remove() ;
         }
 
@@ -499,11 +499,8 @@ $(function() {
 
     function hash_changed(hash){
       //リンク指定先の要素が存在しない場合は動作しない
-
       history.pushState(null,null,hash);
-
       if( !$(hash).length ) return ;
-
       var scroll_value = [] ;
       scroll_value[scroll_value.length] = $(hash).position().top ;
 
@@ -513,7 +510,7 @@ $(function() {
 
       for (var i = 0; i < scroll_value.length ; i++){
         if ( i == scroll_value.length - 1 ){
-          $("html").animate({scrollTop:scroll_value[i]},500,"swing");
+          $("html,body").animate({scrollTop:scroll_value[i]},500,"swing");
         }else{
           active_bar_num = $(".scrb-child").index($(hash).parents(".scrb-child").eq(i));
           scrb_data[active_bar_num]["inner-current-position"] = -scroll_value[i] ;
@@ -524,19 +521,21 @@ $(function() {
           setTimeout(function(){
             adjust_size(active_bar_num);
             adjust_height(active_bar_num);
-          },0);
+          },500);
         }
       }
     }
 
-    window.onload = function(){
-        location.hash ? hash_changed(location.hash) : "" ;
-    }
+    //読み込み完了時に実行
+    location.hash ? hash_changed(location.hash) : "" ;
+
+    //aタグクリック時の処理
 
     $("a").on("click",function(){
-        event.preventDefault();
-        $(this)[0].origin + $(this)[0].pathname == location.origin + location.pathname ? hash_changed($(this)[0].hash) : location.href = $(this)[0].href ;
+        ($(this)[0].origin ? $(this)[0].origin + $(this)[0].pathname : $(this)[0].href.replace($(this)[0].hash,"") ) == location.origin + location.pathname ? hash_changed($(this)[0].hash) : location.href = $(this)[0].href ;
+        (event.preventDefault) ? event.preventDefault() : event.returnValue = false ;
     });
+
 
     //スクロールバーにhoverした時の処理
 
